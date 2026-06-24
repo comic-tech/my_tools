@@ -41,35 +41,38 @@ def shred(f_path):
 def main():
     f_path = input("Path:- ")
     #checkif path is correct/exists
-    if os.path.exists(f_path):#true
-        #dir
-        if os.path.isdir(f_path):
-            for current_path, folders, files in os.walk(f_path, topdown=False):
-                #access files and encrypt
-                for file in files:
-                    shred(os.path.join(current_path,file))
-                    print(f"DELETED : {file}")
+    try:
+        if os.path.exists(f_path):#true
+            #dir
+            if os.path.isdir(f_path):
+                for current_path, folders, files in os.walk(f_path, topdown=False):
+                    #access files and encrypt
+                    for file in files:
+                        shred(os.path.join(current_path,file))
+                        print(f"DELETED : {file}")
 
-                # encrypt folder name
-                for dir in folders:
-                    shred_dir(current_path, dir)
+                    # encrypt folder name
+                    for dir in folders:
+                        shred_dir(current_path, dir)
 
-            #delete parent
-            split_path = f_path.split("/",-1)
-            dir = split_path[-1]
-            split_path.pop(-1)
-            joint = "/".join(split_path)
-            shred_dir(current_path=joint, dir=dir)
+                #delete parent
+                split_path = f_path.split("/",-1)
+                dir = split_path[-1]
+                split_path.pop(-1)
+                joint = "/".join(split_path)
+                shred_dir(current_path=joint, dir=dir)
 
-        # file
+            # file
+            else:
+                shred(f_path)
+            
+            print("DONE\n")
+        #false
         else:
-            shred(f_path)
-        
-        print("DONE\n")
-    #false
-    else:
-        print(f"ERROR: path not found: '{f_path}'")
+            print(f"ERROR: path not found: '{f_path}'")
 
+    except Exeption as e:
+        print(f"Error: {e}")
 if __name__ == "__main__":
     main()
 
