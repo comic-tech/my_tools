@@ -1,10 +1,19 @@
-#version 1.2
-#delete files securely and leave minimal traces of the file including file name which may give out some info like date created 
+#version 2.0
 
 import os
+import hashlib
 from cryptography.fernet import Fernet
 
-#encrypt + delete with different keys for each file
+#folders
+def shred_dir(current_path, dir):
+    old = os.path.join(current_path, dir)
+    new = os.path.join(current_path, hashlib.sha3_512(dir.encode()).hexdigest())
+    os.rename(old, new)
+    os.rmdir(new)
+    print(f"DELETED : {old}")
+
+
+#encrypt and delete files
 def shred(f_path):
     key = Fernet.generate_key()
     try:
@@ -16,30 +25,51 @@ def shred(f_path):
         with open(f_path, "wb") as file:
             file.write(contents)
 
-        new = Fernet(key).encrypt(f_path.encode())
+        #reaname and delete file
+        new = hashlib.sha3_512(f_path.encode()).hexdigest()
         os.rename(f_path, new)
         os.remove(new)
         print(f"DELETED : {f_path}")
-
 
     except Exception as e:
         print(f"Error: {e}")
 
     finally:
         key = None
-        
 
+#main function
 def main():
-    f_path = input ("Path:- ")
-    if os.path.isdir(f_path):
-        for i in os.listdir(f_path):
-            shred(os.path.join(f_path,i))
-        os.rmdir(f_path)
+    f_path = input("Path:- ")
+    #checkif path is correct/exists
+    if os.path.exists(f_path):#true
+        #dir
+        if os.path.isdir(f_path):
+            for current_path, folders, files in os.walk(f_path, topdown=False):
+                #access files and encrypt
+                for file in files:
+                    shred(os.path.join(current_path,file))
+                    print(f"DELETED : {file}")
+
+                # encrypt folder name
+                for dir in folders:
+                    shred_dir(current_path, dir)
+
+            #delete parent
+            split_path = f_path.split("/",-1)
+            dir = split_path[-1]
+            split_path.pop(-1)
+            joint = "/".join(split_path)
+            shred_dir(current_path=joint, dir=dir)
+
+        # file
+        else:
+            shred(f_path)
+        
         print("DONE\n")
-    
+    #false
     else:
-        shred(f_path)
-        print("DONE\n")
+        print(f"ERROR: path not found: '{f_path}'")
 
 if __name__ == "__main__":
     main()
+
